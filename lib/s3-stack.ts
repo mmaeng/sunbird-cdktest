@@ -2,37 +2,20 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as s3 from "aws-cdk-lib/aws-s3";
-import { ConfigProps } from "./config";
-import { Stack, StackProps } from "aws-cdk-lib";
 import * as iam from "aws-cdk-lib/aws-iam";
-import * as ssm from "aws-cdk-lib/aws-ssm";
 
-import {
-  GatewayVpcEndpointAwsService,
-  Vpc,
-  FlowLogTrafficType,
-  FlowLogDestination,
-  InterfaceVpcEndpoint,
-} from "aws-cdk-lib/aws-ec2";
+export interface S3StackProps extends cdk.StackProps {
+  vpc: ec2.Vpc;
+}
 
-import { SubnetGroup } from "aws-cdk-lib/aws-rds";
-type AwsEnvStackProps = StackProps & {
-  config: Readonly<ConfigProps>;
-};
-
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 export class s3Stack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: AwsEnvStackProps) {
-    super(scope, id, props);
-    //const vpcId = cdk.Fn.importValue("SB-RCVPC");
-    const { config } = props;
+  private vpc: ec2.Vpc;
 
-    // const vpcId = ssm.StringParameter.valueFromLookup(
-    //   this,
-    //   "/VpcProvider/VPCID"
-    // );
-    const vpc = ec2.Vpc.fromLookup(this, "SB-RCVPC", {
-      vpcId: "vpc-09c0c359d8d0537c7",
+  constructor(scope: Construct, id: string, props: S3StackProps) {
+    super(scope, id, props);
+
+    new cdk.CfnOutput(this, "VpcId", {
+      value: props.vpc.vpcId,
     });
 
     // Create an IAM user
@@ -61,36 +44,9 @@ export class s3Stack extends cdk.Stack {
       exportName: `${cdk.Aws.STACK_NAME}-UserArn`,
     });
 
-    // // Create an IAM role
-    // const role = new iam.Role(this, "s3role", {
-    //   // assumedBy: new iam.ServicePrincipal("ec2.amazonaws.com"),
-    //   roleName: "sbrcs3Role", // Replace with your desired role name
-    // });
-
-    // Attach a managed policy to the role
-    // role.addManagedPolicy(
-    //   iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
-    // );
-
-    // // Output the role ARN
-    // const roleArnOutput = new cdk.CfnOutput(this, "RoleArn", {
-    //   description: "IAM Role ARN",
-    //   value: role.roleArn,
-    //   exportName: `${cdk.Aws.STACK_NAME}-RoleArn`,
-    // });
-
-    // // Attach the role to the user
-
-    // user.addToPolicy(
-    //   new iam.PolicyStatement({
-    //     actions: ["sts:AssumeRole"],
-    //     resources: [role.roleArn],
-    //   })
-    // );
-
     const myBucket = new s3.Bucket(this, "MyBucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Only for demo purposes; change to the appropriate removal policy
-      bucketName: "sbrc-registry-18",
+      bucketName: "sbrc-registry-18-testing",
     });
 
     // Define an IAM policy statement that allows PutObject
